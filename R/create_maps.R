@@ -95,17 +95,58 @@ HIGHLIGHT_OPTIONS = highlightOptions(
 # https://stackoverflow.com/a/52226825/7051239
 TITLE_STYLE <- "
   .leaflet-control.map-title { 
-    transform: translate(-50%,20%);
+    transform: translate(-50%,0%);
     position: fixed !important;
     left: 50%;
     text-align: center;
     padding-left: 10px; 
     padding-right: 10px; 
-    background: rgba(255,255,255,0.75);
+    background: rgba(255,255,255,0.85);
     font-weight: bold;
     font-size: 28px;
+    line-height: 1.2;
+  }
+  details {
+    font-weight: normal;
+    font-size: 16px;
+    text-align: left;
+  }
+  p { 
+    font-weight: normal;
+    font-size: 14px;
+    text-align: left;
+    line-height: 1.2;
+  }
+  span {
+    font-size: 20px;
+    line-height: 0.8;
+    padding-bottom: 5px;
   }
 "
+
+DATA_NOTE <- str_glue(
+"<p>The COVID-19 Emergency Eviction and Foreclosure Protection Act (CEEFPA) that \\
+passed in December 2020 provided most tenants with temporary eviction \\
+protections if they submit a hardship declaration form. In early 2021, in \\
+collaboration with JustFix.nyc and HJ4A, we launched EvictionFreeNY.org, a \\
+website that enabled tenants to submit their hardship declaration forms \\
+online, so more tenants can take advantage of the eviction protections. 17,980 \\
+tenants across New York State submitted hardship declarations using \\
+EvictionFreeNY.org protecting themselves from eviction (those submitted using \\
+EvictionFreeNY.org are only a subset of all declaration forms submitted to OCA). \\
+When CEEFPA expired in January 2022, it left hundreds of thousands of tenants \\
+unprotected and at imminent risk of eviction.</p>\\
+<p>To accurately map the hardship declarations and eviction cases the data needed \\
+to be geocoded. This map shows 94% of the hardship declarations submitted via \\
+EvictionFreeNY.org, and 97% of all 226,345 active eviction cases that were \\
+successfully geocoded.</p>
+<p>The active eviction cases data for this map comes from the Office of Court \\
+Administration via the Housing Data Coalition. It was obtained and made \\
+available through the collaborative efforts of the Housing Data Coalition, \\
+the Right to Counsel Coalition, BetaNYC, the Association for Neighborhood and \\
+Housing Development, the University Neighborhood Housing Program, and JustFix.</p>"
+)
+
 
 # created from JF admin dashboard via "SQL/efny_query.sql"
 # then geocoded with Geosupport & Nominatim (TODO: add info)
@@ -332,11 +373,11 @@ create_map <- function(.data, title) {
   tag.map.title <- tags$style(HTML(TITLE_STYLE))
   
   title_control <- tags$div(
-    tag.map.title, HTML(title)
+    tag.map.title, HTML(str_glue("{title}</br><details><summary>Data sources and methods</summary>{DATA_NOTE}</details>"))
   )  
   
   leaflet() %>% 
-    setView(lng = -73.801047, lat = 40.742274, zoom = 11) %>% 
+    setView(lng = -75.55451, lat = 42.49277, zoom = 8) %>% 
     addMapboxGL(style = "mapbox://styles/mapbox/dark-v9") %>% 
     add_choropleth_continuous(.data, "oca_cases", "Active Eviction Cases") %>%
     add_choropleth_continuous(.data, "efny_decs", "EFNY Hardship Declarations") %>%
@@ -368,7 +409,7 @@ senate_data <- generate_data("state-senate", 100) %>%
   mutate(geo_name = str_remove(geo_name, "\\(.*")) %>% 
   export_geojson("state-senate")
 
-create_map(senate_data, "RTC - Eviction Risk Map - State Senante") %>% 
+create_map(senate_data, "How many tenants are at risk of eviction?<br><span>State Senate</span>") %>% 
   export_map_html("state-senate-map.html", "RTC Eviction Map State Senate")
 
 
@@ -378,7 +419,7 @@ assembly_data <- generate_data("state-assembly", 100) %>%
   mutate(geo_name = str_c("State ", str_remove(geo_name, "\\(.*"))) %>% 
   export_geojson("state-assembly")
 
-create_map(assembly_data, "RTC - Eviction Risk Map - State Assembly") %>% 
+create_map(assembly_data, "How many tenants are at risk of eviction?<br><span>State Assembly</span>") %>% 
   export_map_html("state-assembly-map.html", "RTC Eviction Map State Assembly")
 
 
@@ -388,5 +429,5 @@ zcta_data <- generate_data("zcta", 100) %>%
   mutate(geo_name = str_replace(geo_name, "ZCTA5", "Zip Code Tabulation Area")) %>% 
   export_geojson("zcta")
 
-create_map(zcta_data, "RTC - Eviction Risk Map - Zip Code Tabulation Areas") %>% 
+create_map(zcta_data, "How many tenants are at risk of eviction?<br><span>Zip Code Tabulation Areas</span>") %>% 
   export_map_html("zcta-map.html", "RTC Eviction Map State ZCTA")
